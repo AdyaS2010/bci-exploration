@@ -1,1 +1,1 @@
-# eeg-exploration
+# Muse 2 Research
