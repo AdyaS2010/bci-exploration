@@ -98,3 +98,24 @@ def test_linear_trend_recovers_slope():
     y = 0.5 * x + np.random.default_rng(7).normal(0, 0.1, 10)
     result = linear_trend(x, y)
     assert result["slope_ci_low"] < 0.5 < result["slope_ci_high"]
+
+
+def test_compare_states_fdr_controls_chance_findings():
+    # Pure-noise features: raw p-values dip under .05 about 5% of the time each, so with
+    # 40 features almost every run has a "finding". Under FDR correction, a run with any
+    # false positive should be rare (~5% of runs when nothing is real). Checked over many
+    # runs, because in any single run a chance survivor is allowed.
+    rng = np.random.default_rng(8)
+    names = [f"noise{i}_rel_X" for i in range(40)]
+    runs, raw_hits, fdr_hits = 60, 0, 0
+    for _ in range(runs):
+        rows = fake_rows("rest", 40, 10, rng) + fake_rows("math", 40, 10, rng)
+        for r in rows:
+            for name in names:
+                r[name] = float(rng.normal())
+        results = compare_states(rows, names)
+        assert all(r["p_fdr"] >= r["p"] for r in results)
+        raw_hits += any(r["p"] < 0.05 for r in results)
+        fdr_hits += any(r["p_fdr"] < 0.05 for r in results)
+    assert raw_hits / runs > 0.8
+    assert fdr_hits / runs < 0.15

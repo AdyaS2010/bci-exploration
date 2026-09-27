@@ -142,6 +142,10 @@ def compare_states(rows, features):
     state differs. Epsilon-squared, H / (n - 1), is its effect size: the share of rank
     variance explained by state, from 0 to 1. Pairwise Cohen's d says which states
     differ and in which direction. Results are sorted by effect size, largest first.
+
+    Testing ~57 features at once means some will reach p < .05 by chance alone. p_fdr is
+    the Benjamini-Hochberg adjusted p-value across all features tested. Use it, not the
+    raw p, to decide whether any feature separates states at all.
     """
     clean_rows = [r for r in rows if not r["rejected"]]
     labels = sorted({r["label"] for r in clean_rows})
@@ -170,6 +174,9 @@ def compare_states(rows, features):
                 "pairwise": pairwise,
             }
         )
+    adjusted = stats.false_discovery_control([r["p"] for r in results])
+    for r, p_fdr in zip(results, adjusted, strict=True):
+        r["p_fdr"] = float(p_fdr)
     results.sort(key=lambda r: r["epsilon_sq"], reverse=True)
     return results
 
