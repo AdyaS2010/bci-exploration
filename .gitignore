@@ -1,0 +1,16 @@
+# Raw EEG never goes in git: keeps the repo light and protects neural-data privacy.
+data/
+
+# Python
+.venv/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+*.egg-info/
+
+# Editors / OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
