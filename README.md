@@ -24,7 +24,9 @@ Semester 1, early phase. What exists:
 | State exploration | `scripts/run_state_explore.py` | written, awaiting data |
 | Real-time loop with real/sham toggle | `src/kestrel/neurofeedback.py` | written, tested on synthetic board |
 
-The hypotheses and analysis plan are fixed in [docs/preregistration.md](docs/preregistration.md) before any real experiment runs.
+Hypotheses and analysis plans are written before any real data exist:
+[docs/preregistration.md](docs/preregistration.md) (neurofeedback) and
+[docs/preregistration-state-exploration.md](docs/preregistration-state-exploration.md) (activity signatures).
 
 ## Quickstart
 
