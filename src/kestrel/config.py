@@ -121,5 +121,6 @@ DEFAULT_SUBJECT = "S01"
 
 REPO_ROOT = Path(__file__).resolve().parents[2]
 DATA_DIR = REPO_ROOT / "data"  # git-ignored
-RAW_DIR = DATA_DIR / "raw"
+RAW_DIR = DATA_DIR / "raw"  # real headset recordings only
+SYNTHETIC_DIR = DATA_DIR / "synthetic"  # kept apart so fake data never enters a real analysis
 RESULTS_DIR = DATA_DIR / "results"

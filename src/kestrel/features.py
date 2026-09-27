@@ -137,3 +137,26 @@ def write_csv(rows, path):
         writer.writeheader()
         writer.writerows(rows)
     return path
+
+
+def recording_features(eeg, meta, recording=""):
+    """Raw recording -> filtered epochs -> tidy feature rows, in one call.
+
+    Every analysis script goes through this, so all conditions get identical
+    preprocessing, which a fair comparison depends on.
+    """
+    from kestrel.preprocess import preprocess_recording
+
+    fs = meta["sampling_rate"]
+    epochs, starts, keep = preprocess_recording(eeg, fs)
+    rows = feature_table(
+        epochs,
+        fs,
+        meta["label"],
+        keep_mask=keep,
+        channels=meta["channels"],
+        epoch_starts=starts,
+        recording=recording,
+        subject=meta["subject"],
+    )
+    return rows, epochs, keep

@@ -136,7 +136,10 @@ def list_recordings(raw_dir=None, labels=None, subject=None):
 
 
 def record_block(label, seconds, note="", subject=config.DEFAULT_SUBJECT, use_synthetic=None):
-    """Connect, record one labelled block, disconnect, save. Returns the .npy path."""
+    """Connect, record one labelled block, disconnect, save. Returns the .npy path.
+
+    Synthetic-board recordings go to data/synthetic/, real ones to data/raw/.
+    """
     board = connect(use_synthetic)
     try:
         bid = board.get_board_id()
@@ -144,13 +147,15 @@ def record_block(label, seconds, note="", subject=config.DEFAULT_SUBJECT, use_sy
         eeg, fs = record(board, seconds)
     finally:
         board.release_session()
+    synthetic = bid == config.SYNTHETIC_BOARD_ID
     return save_recording(
         eeg,
         fs,
         label,
         note=note,
         subject=subject,
-        board_name="synthetic" if bid == config.SYNTHETIC_BOARD_ID else "muse_2",
+        board_name="synthetic" if synthetic else "muse_2",
         source_channel_names=source_names,
         requested_seconds=seconds,
+        out_dir=config.SYNTHETIC_DIR if synthetic else config.RAW_DIR,
     )
