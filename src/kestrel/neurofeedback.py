@@ -23,7 +23,7 @@ import numpy as np
 
 from kestrel import config
 from kestrel.features import band_power, welch_psd
-from kestrel.preprocess import clean, reject_by_amplitude
+from kestrel.preprocess import clean_causal, reject_by_amplitude
 
 MODES = ("real", "sham")
 
@@ -123,13 +123,13 @@ def text_bar(value, width=40):
 
 
 def _latest_window(board, rows, fs, window_s):
-    # Filter a longer buffer than we analyse, so filter edge effects fall on samples
-    # we then discard rather than on the window we measure.
+    # Causal-filter a buffer twice the window length and keep the newest half. The
+    # filter's start-up transient lands in the discarded older half (see clean_causal).
     buffer_n = int(2 * window_s * fs)
     data = board.get_current_board_data(buffer_n)[rows].astype(float)
     if data.shape[1] < buffer_n:
         return None
-    return clean(data, fs)[:, -int(window_s * fs) :]
+    return clean_causal(data, fs)[:, -int(window_s * fs) :]
 
 
 def measure_baseline(board, rows, fs, channel_idx, seconds, window_s=None, update_s=None):

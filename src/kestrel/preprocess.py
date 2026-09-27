@@ -9,7 +9,7 @@ extra check, never as the only one.
 """
 
 import numpy as np
-from scipy.signal import butter, filtfilt, iirnotch, sosfiltfilt
+from scipy.signal import butter, filtfilt, iirnotch, sosfilt, sosfilt_zi, sosfiltfilt, tf2sos
 
 from kestrel import config
 
@@ -40,6 +40,27 @@ def notch(data, fs, freq=config.NOTCH_HZ, quality=config.NOTCH_QUALITY):
 def clean(data, fs):
     """Standard Kestrel filter chain: notch first, then 1-40 Hz bandpass."""
     return bandpass(notch(data, fs), fs)
+
+
+def clean_causal(data, fs):
+    """Same notch + bandpass as clean(), but causal (past samples only), for real time.
+
+    Zero-phase filtering runs backwards too, so the newest samples always sit at the
+    filter's edge and get distorted. That's harmless offline, but in live feedback the
+    newest samples are exactly what we show. A causal filter's start-up transient is at
+    the oldest end of the buffer instead, which the caller discards. Causal filtering
+    shifts phase, but band power doesn't depend on phase, so live and offline power
+    stay comparable.
+    """
+    sos = butter(config.FILTER_ORDER, config.BANDPASS_HZ, btype="bandpass", fs=fs, output="sos")
+    if config.NOTCH_HZ < fs / 2:
+        b, a = iirnotch(config.NOTCH_HZ, config.NOTCH_QUALITY, fs=fs)
+        sos = np.vstack([tf2sos(b, a), sos])
+    # Start the filter as if the first sample had been there forever. Otherwise the
+    # Muse's large DC offset (hundreds of µV) rings through the whole buffer.
+    zi = sosfilt_zi(sos)[:, np.newaxis, :] * data[np.newaxis, :, :1]  # (sections, ch, 2)
+    out, _ = sosfilt(sos, data, axis=-1, zi=zi)
+    return out
 
 
 def epoch(data, fs, epoch_seconds=config.EPOCH_SECONDS, overlap=config.EPOCH_OVERLAP):

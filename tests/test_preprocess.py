@@ -6,6 +6,7 @@ import pytest
 from kestrel.preprocess import (
     bandpass,
     clean,
+    clean_causal,
     contamination_report,
     epoch,
     notch,
@@ -119,3 +120,22 @@ def test_preprocess_recording_end_to_end():
     assert len(epochs) == len(starts) == len(keep) == 19
     # The DC offset must be gone, or every epoch would fail the threshold.
     assert keep[1:-1].all()
+
+
+def test_causal_clean_matches_offline_power_at_newest_window():
+    # The live loop filters a 4 s buffer causally and keeps the newest 2 s. Its alpha
+    # power must match what offline zero-phase filtering of the full recording gives
+    # for the same 2 s, even with a Muse-like DC offset, so live and offline numbers
+    # are comparable.
+    from kestrel.features import band_power, welch_psd
+
+    rng = np.random.default_rng(3)
+    data = np.vstack([tone(11.0, seconds=20.0)] * 4) + rng.normal(0, 3, (4, 20 * FS)) + 800.0
+    end = 12 * FS
+    live = clean_causal(data[:, end - 4 * FS : end], FS)[:, -2 * FS :]
+    offline = clean(data, FS)[:, end - 2 * FS : end]
+    f, p_live = welch_psd(live, FS)
+    _, p_off = welch_psd(offline, FS)
+    ratio = band_power(f, p_live, (10, 12)) / band_power(f, p_off, (10, 12))
+    assert np.allclose(ratio, 1.0, atol=0.02)
+    assert np.all(np.abs(live).max(axis=1) < 30)  # DC offset gone, no start-up ringing
