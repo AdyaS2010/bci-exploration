@@ -81,6 +81,19 @@ REJECT_PEAK_TO_PEAK_UV = 150.0
 # averages three half-overlapping segments, which smooths the PSD estimate.
 WELCH_SEGMENT_SECONDS = 1.0
 
+# --- Neurofeedback --------------------------------------------------------------
+
+NF_TARGET_BAND = UPPER_ALPHA
+# Temporal sites are the closest the Muse gets to the posterior alpha generators, and
+# they're further from the eyes than AF7/AF8, whose low frequencies are dominated by
+# blinks and eye movement. Jaw clenches do hit TP9/TP10, which is why the artifact
+# freeze and the clench catch block matter.
+NF_CHANNELS = ["TP9", "TP10"]
+# 2 s windows match the offline epochs, so live and offline power are comparable.
+# Updating every 0.25 s feels responsive without the bar jittering on noise.
+NF_WINDOW_SECONDS = 2.0
+NF_UPDATE_SECONDS = 0.25
+
 # --- Recording labels ---------------------------------------------------------
 
 # Known block labels. Not enforced (new activities are welcome), but record_session.py
