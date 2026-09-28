@@ -1,4 +1,4 @@
-# Kestrel
+# Project Kestrel
 
 *A kestrel holds itself still in mid-air to focus on one thing.*
 
